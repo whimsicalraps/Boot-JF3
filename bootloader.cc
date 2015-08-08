@@ -1,7 +1,9 @@
+// Bootloader.cc
 // Copyright 2012 Olivier Gillet.
 //
 // Author: Olivier Gillet (ol.gillet@gmail.com)
-//
+// Modified by: Dan Green (danngreen1@gmail.com) 2015
+
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -115,10 +117,12 @@ void update_slider_LEDs(void){
 			if (++slider_i>=6) slider_i=0;
 
 			//FSK only?
+
 			if (((packet_index/6) % (78*2) )<78)
 				LEDDriver_set_one_LED((packet_index/6) % 78, 500);
 			else
 				LEDDriver_set_one_LED((packet_index/6) % 78, 0);
+
 		}
 	} else if (ui_state == UI_STATE_WRITING){
 
@@ -130,10 +134,16 @@ void update_slider_LEDs(void){
 		}
 
 	} else if (ui_state == UI_STATE_WAITING){
-		if (dly++>fade_speed) dly=0;
+
+		if (dly==(fade_speed>>1)){ 		LEDDriver_set_one_LED(0, 500);LEDDriver_set_one_LED(1, 0);}
+		if (dly++==fade_speed) {dly=0;	LEDDriver_set_one_LED(0, 0);LEDDriver_set_one_LED(1, 500);}
+
+
 		//FSK only (needs to be optimized for QPSK)
+		/*
 		LEDDriver_set_one_LED(0, dly>fade_speed/2 ? dly : fade_speed-dly);
 		LEDDriver_set_one_LED(1, dly>fade_speed/2 ? fade_speed-dly: dly);
+		*/
 	}
 
 }
@@ -171,7 +181,7 @@ uint16_t discard_samples = 8000;
 
 void TIM4_IRQHandler(void)
 {
-
+/*
 	LED_ON(LED_LOCK[0]);
 
 	if (!discard_samples) {
@@ -191,52 +201,60 @@ void TIM4_IRQHandler(void)
 	TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
 
 	LED_OFF(LED_LOCK[0]);
-
+*/
 }
 
 void process_audio_block(int16_t *input, int16_t *output, uint16_t ht, uint16_t size){
-	//bool sample;
-	//bool last_sample=false;
+	bool sample;
+	static bool last_sample=false;
 	int32_t t;
-	int32_t sample;
+	//int32_t sample;
 
 	LED_ON(LED_LOCK[5]);
 
 	while (size) {
-		size-=2;
+		size-=4;
 
-		sample=*input;
-		sample = (sample>>3) + 2048;
-
-		*output++=*input++; //Left
-		*output++=*input++; //Right
-
-	//	bool sample = *input>100 ? true : false;
-/*
 		t=*input;
-		if (last_sample){
-			if (t < -1000) sample=false;
-			else sample=true;
+
+		if (last_sample==true){
+			if (t < -300)
+				sample=false;
+			else
+				sample=true;
 		} else {
-			if (t > 1000) sample=true;
-			else sample=false;
+			if (t > 400)
+				sample=true;
+			else
+				sample=false;
 		}
 		last_sample=sample;
 
-		if (sample) 	{LOCKJACK_ON;}
-		else {LOCKJACK_OFF;}
 
-		*output++=*input++; //Left
-		*output++=*input++; //Left
-		*output++=*input++; //Right
-		*output++=*input++; //Right
-*/
+		if (sample) LOCKJACK_ON;
+		else LOCKJACK_OFF;
 
 		if (!discard_samples) {
 			demodulator.PushSample(sample);
 		} else {
 			--discard_samples;
 		}
+
+		*output++=*input;
+		*output++=0;
+		*output++=0;
+		*output++=0;
+
+		*input++;
+		*input++;
+		*input++;
+		*input++;
+	/*
+		*output++=*input++; //Left
+		*output++=*input++; //Left
+		*output++=*input++; //Right
+		*output++=*input++; //Right
+*/
 
 	}
 	LED_OFF(LED_LOCK[5]);
@@ -263,7 +281,7 @@ static uint32_t kSectorBaseAddress[] = {
 };
 const uint32_t kBlockSize = 16384;
 const uint16_t kPacketsPerBlock = kBlockSize / kPacketSize; //64
-uint8_t rx_buffer[kBlockSize];
+uint8_t recv_buffer[kBlockSize];
 
 void ProgramPage(const uint8_t* data, size_t size) {
 	LED_ON(LED_LOCK[4]);
@@ -286,14 +304,14 @@ void ProgramPage(const uint8_t* data, size_t size) {
 }
 
 void init_audio_in(){
-	/*
-	//QPSK
+
+	//QPSK or Codec
 	Codec_Init(48000);
 	do {register unsigned int i; for (i = 0; i < 1000000; ++i) __asm__ __volatile__ ("nop\n\t":::"memory");} while (0);
 	I2S_Block_Init();
 	do {register unsigned int i; for (i = 0; i < 1000000; ++i) __asm__ __volatile__ ("nop\n\t":::"memory");} while (0);
 	I2S_Block_PlayRec();
-*/
+
 }
 
 void Init() {
@@ -314,9 +332,8 @@ void LED_ring_startup(void){
 
 	for (i=0;i<77+trail;i++){
 		if (i<77) LEDDriver_set_one_LED(i, 500);
-		//dly=150000;while (dly--){;}
 		delay(300000);
-		if (i>=8) LEDDriver_set_one_LED(i-trail, 0);
+		if (i>=trail) LEDDriver_set_one_LED(i-trail, 0);
 	}
 }
 
@@ -324,6 +341,7 @@ void InitializeReception() {
 
 
 	//FSK
+
 	decoder.Init();
 	decoder.Reset();
 
@@ -331,8 +349,9 @@ void InitializeReception() {
 	demodulator.Sync();
 
 
-	/*
+
 	//QPSK
+	/*
 	decoder.Init(20000);
 	demodulator.Init(
 	 kModulationRate / kSampleRate * 4294967296.0,
@@ -340,7 +359,7 @@ void InitializeReception() {
 	 2.0 * kSampleRate / kBitRate);
 	demodulator.SyncCarrier(true);
 	decoder.Reset();
-	 */
+*/
 
 	current_address = kStartAddress;
 	packet_index = 0;
@@ -374,7 +393,7 @@ int main(void) {
 
 		LED_ring_startup();
 
-	//	init_audio_in(); //QPSK
+		init_audio_in(); //QPSK or Codec
 		sys.StartTimers();
 	}
 
@@ -391,8 +410,9 @@ int main(void) {
 	while (!exit_updater) {
 		bool error = false;
 
-		/*
+
 		//QPSK
+		/*
 		if (demodulator.state() == DEMODULATOR_STATE_OVERFLOW){
 			error = true;
 			LED_ON(LED_LOCK[2]);
@@ -412,17 +432,17 @@ int main(void) {
 				case PACKET_DECODER_STATE_OK:
 				{
 					ui_state = UI_STATE_RECEIVING;
-					memcpy(rx_buffer + (packet_index % kPacketsPerBlock) * kPacketSize, decoder.packet_data(), kPacketSize);
+					memcpy(recv_buffer + (packet_index % kPacketsPerBlock) * kPacketSize, decoder.packet_data(), kPacketSize);
 					++packet_index;
 					if ((packet_index % kPacketsPerBlock) == 0) {
 						ui_state = UI_STATE_WRITING;
-						ProgramPage(rx_buffer, kBlockSize);
+						ProgramPage(recv_buffer, kBlockSize);
 						decoder.Reset();
 						demodulator.Sync(); //FSK
 						//demodulator.SyncCarrier(false);//QPSK
 					} else {
 						decoder.Reset(); //FSK
-						//	demodulator.SyncDecision();//QPSK
+						//demodulator.SyncDecision();//QPSK
 					}
 				}
 				break;

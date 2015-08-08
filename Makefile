@@ -11,8 +11,9 @@ MAINAPP_HEX = ../smrf-p6/main.hex
 OBJECTS = 	startup_stm32f429_439xx.o system_stm32f4xx.o \
 			bootloader.o inouts.o bootloader_utils.o system_clock.o system.o led_driver.o \
 			mem.o misc.o stm32f4xx_flash.o stm32f4xx_gpio.o stm32f4xx_rcc.o stm32f4xx_tim.o stm32f4xx_i2c.o \
-			encoding/fsk/packet_decoder.o 
-#			stm32f4xx_spi.o stm32f4xx_dma.o codec.o i2s.o encoding/qpsk/demodulator.o
+			stm32f4xx_spi.o stm32f4xx_dma.o codec.o i2s.o encoding/fsk/packet_decoder.o 
+#			stm32f4xx_spi.o stm32f4xx_dma.o codec.o i2s.o encoding/qpsk/demodulator.o encoding/qpsk/packet_decoder.o 
+#			encoding/fsk/packet_decoder.o 
 		
 			
  

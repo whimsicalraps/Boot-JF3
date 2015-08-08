@@ -38,6 +38,7 @@ void System::Init(uint32_t timer_period, bool application) {
 	}
 
 	//FSK
+	/*
 	TIM_TimeBaseInitTypeDef  tim;
 
 	uint16_t PrescalerValue = 0;
@@ -65,12 +66,12 @@ void System::Init(uint32_t timer_period, bool application) {
 	TIM_ITConfig(TIM4, TIM_IT_Update, DISABLE);
 
 	TIM_Cmd(TIM4, DISABLE);
-
+*/
 }
 
 void System::StartTimers() {
-	TIM_Cmd(TIM4, ENABLE);
-	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE); //FSK
+//	TIM_Cmd(TIM4, ENABLE);
+//	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE); //FSK
 
 	SysTick_Config(F_CPU / 1000);
 }
