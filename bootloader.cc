@@ -2,7 +2,7 @@
 // Copyright 2012 Olivier Gillet.
 //
 // Author: Olivier Gillet (ol.gillet@gmail.com)
-// Modified by: Dan Green (danngreen1@gmail.com) 2015
+// Modified for SMR project: Dan Green (danngreen1@gmail.com) 2015
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,6 @@
 
 extern "C" {
 #include <stddef.h> /* size_t */
-#include "mem.h"
 #include "inouts.h"
 #include "codec.h"
 #include "i2s.h"
@@ -71,8 +70,9 @@ using namespace stm_audio_bootloader;
 const float kSampleRate = 48000.0;
 //const float kModulationRate = 6000.0; //QPSK 6000
 //const float kBitRate = 12000.0; //QPSK 12000
-const uint32_t kStartAddress = 0x08008000;
-
+uint32_t kStartExecutionAddress =		0x08008000;
+uint32_t kStartReceiveAddress = 		0x08080000;
+uint32_t EndOfMemory =					0x080FFFFC;
 
 extern "C" {
 
@@ -94,6 +94,8 @@ uint16_t packet_index;
 uint16_t old_packet_index=0;
 uint8_t slider_i=0;
 
+bool g_error;
+
 enum UiState {
   UI_STATE_WAITING,
   UI_STATE_RECEIVING,
@@ -104,10 +106,19 @@ volatile UiState ui_state;
 
 extern "C" {
 
+inline void *memcpy(void *dest, const void *src, size_t n)
+{
+    char *dp = (char *)dest;
+    const char *sp = (const char *)src;
+    while (n--)
+        *dp++ = *sp++;
+    return dest;
+}
+
 
 void update_slider_LEDs(void){
 	static uint16_t dly=0;
-	uint16_t fade_speed=1600;
+	uint16_t fade_speed=800;
 
 	if (ui_state == UI_STATE_RECEIVING){
 		if (packet_index>old_packet_index){
@@ -135,8 +146,8 @@ void update_slider_LEDs(void){
 
 	} else if (ui_state == UI_STATE_WAITING){
 
-		if (dly==(fade_speed>>1)){ 		LEDDriver_set_one_LED(0, 500);LEDDriver_set_one_LED(1, 0);}
-		if (dly++==fade_speed) {dly=0;	LEDDriver_set_one_LED(0, 0);LEDDriver_set_one_LED(1, 500);}
+		if (dly==(fade_speed>>1)){ 		LEDDriver_set_one_LED(1, 500);LEDDriver_set_one_LED(2, 0);}
+		if (dly++==fade_speed) {dly=0;	LEDDriver_set_one_LED(1, 0);LEDDriver_set_one_LED(2, 500);}
 
 
 		//FSK only (needs to be optimized for QPSK)
@@ -179,9 +190,10 @@ void SysTick_Handler() {
 
 uint16_t discard_samples = 8000;
 
+/*
 void TIM4_IRQHandler(void)
 {
-/*
+
 	LED_ON(LED_LOCK[0]);
 
 	if (!discard_samples) {
@@ -195,14 +207,14 @@ void TIM4_IRQHandler(void)
 		--discard_samples;
 	}
 
-
+	LED_OFF(LED_LOCK[0]);
 
 	// Clear TIM4 update interrupt
 	TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
 
-	LED_OFF(LED_LOCK[0]);
-*/
+
 }
+*/
 
 void process_audio_block(int16_t *input, int16_t *output, uint16_t ht, uint16_t size){
 	bool sample;
@@ -240,7 +252,10 @@ void process_audio_block(int16_t *input, int16_t *output, uint16_t ht, uint16_t 
 			--discard_samples;
 		}
 
-		*output++=*input;
+		if (ui_state == UI_STATE_ERROR)
+			*output++=0;
+		else
+			*output++=*input;
 		*output++=0;
 		*output++=0;
 		*output++=0;
@@ -249,12 +264,6 @@ void process_audio_block(int16_t *input, int16_t *output, uint16_t ht, uint16_t 
 		*input++;
 		*input++;
 		*input++;
-	/*
-		*output++=*input++; //Left
-		*output++=*input++; //Left
-		*output++=*input++; //Right
-		*output++=*input++; //Right
-*/
 
 	}
 	LED_OFF(LED_LOCK[5]);
@@ -280,10 +289,43 @@ static uint32_t kSectorBaseAddress[] = {
   0x080E0000
 };
 const uint32_t kBlockSize = 16384;
-const uint16_t kPacketsPerBlock = kBlockSize / kPacketSize; //64
+const uint16_t kPacketsPerBlock = kBlockSize / kPacketSize;
 uint8_t recv_buffer[kBlockSize];
 
-void ProgramPage(const uint8_t* data, size_t size) {
+
+inline void CopyMemory(uint32_t src_addr, uint32_t dst_addr, size_t size) {
+
+	FLASH_Unlock();
+	FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_OPERR | FLASH_FLAG_WRPERR |
+				  FLASH_FLAG_PGAERR | FLASH_FLAG_PGPERR|FLASH_FLAG_PGSERR);
+
+
+	for (size_t written = 0; written < size; written += 4) {
+
+		//check if dst_addr is the start of a sector (in which case we should erase the sector)
+		for (int32_t i = 0; i < 12; ++i) {
+			if (dst_addr == kSectorBaseAddress[i]) {
+				LED_ON(LED_LOCK[i % 6]);
+				FLASH_EraseSector(i * 8, VoltageRange_3);
+				LED_OFF(LED_LOCK[i % 6]);
+			}
+		}
+
+		//Boundary check
+		if (dst_addr > (kStartReceiveAddress-4)) //Do not overwrite receive buffer
+			break;
+
+		//Program the word
+		FLASH_ProgramWord(dst_addr, *(uint32_t*)src_addr);
+
+		src_addr += 4;
+		dst_addr += 4;
+	}
+
+}
+
+
+inline void ProgramPage(const uint8_t* data, size_t size) {
 	LED_ON(LED_LOCK[4]);
 
 	FLASH_Unlock();
@@ -298,6 +340,11 @@ void ProgramPage(const uint8_t* data, size_t size) {
 	for (size_t written = 0; written < size; written += 4) {
 		FLASH_ProgramWord(current_address, *words++);
 		current_address += 4;
+		if (current_address>=EndOfMemory){
+			ui_state = UI_STATE_ERROR;
+			g_error=true;
+			break;
+		}
 	}
 
 	LED_OFF(LED_LOCK[4]);
@@ -361,7 +408,7 @@ void InitializeReception() {
 	decoder.Reset();
 */
 
-	current_address = kStartAddress;
+	current_address = kStartReceiveAddress;
 	packet_index = 0;
 	old_packet_index = 0;
 	slider_i = 0;
@@ -378,7 +425,6 @@ int main(void) {
 	Init();
 	InitializeReception(); //FSK
 
-//	exit_updater = !ROTARY_SW;
 	dly=4000;
 	while(dly--){
 		if (ROTARY_SW) button_debounce++;
@@ -387,7 +433,6 @@ int main(void) {
 	exit_updater = (button_debounce>2000) ? 0 : 1;
 
 	if (!exit_updater){
-		//dly=2000000;while (dly--){}
 		LED_OFF(ALL_LOCK_LEDS);
 		LED_SLIDER_OFF(ALL_SLIDERS);
 
@@ -396,7 +441,6 @@ int main(void) {
 		init_audio_in(); //QPSK or Codec
 		sys.StartTimers();
 	}
-
 
 	dly=4000;
 	while(dly--){
@@ -408,13 +452,13 @@ int main(void) {
 	manual_exit_primed=0;
 
 	while (!exit_updater) {
-		bool error = false;
+		g_error = false;
 
 
 		//QPSK
 		/*
 		if (demodulator.state() == DEMODULATOR_STATE_OVERFLOW){
-			error = true;
+			g_error = true;
 			LED_ON(LED_LOCK[2]);
 			LED_ON(LED_LOCK[3]);
 		}else{
@@ -423,7 +467,7 @@ int main(void) {
 		 */
 
 
-		while (demodulator.available() && !error && !exit_updater) {
+		while (demodulator.available() && !g_error && !exit_updater) {
 			uint8_t symbol = demodulator.NextSymbol();
 			PacketDecoderState state = decoder.ProcessSymbol(symbol);
 			symbols_processed++;
@@ -449,24 +493,33 @@ int main(void) {
 
 				case PACKET_DECODER_STATE_ERROR_SYNC:
 					LED_ON(LED_LOCK[2]);
-					error = true;
+					g_error = true;
 					break;
 
 				case PACKET_DECODER_STATE_ERROR_CRC:
 					LED_ON(LED_LOCK[3]);
-					error = true;
+					g_error = true;
 					break;
 
 				case PACKET_DECODER_STATE_END_OF_TRANSMISSION:
 					exit_updater = true;
+					LED_OFF(ALL_LOCK_LEDS);
+					LED_ON(LED_LOCK[0]);
+					LED_ON(LED_LOCK[5]);
+
+					//Copy from Receive buffer to Execution memory
+
+					CopyMemory(kStartReceiveAddress, kStartExecutionAddress, (current_address-kStartReceiveAddress));
+
 					LED_ON(ALL_LOCK_LEDS);
+
 					break;
 
 				default:
 					break;
 			}
 		}
-		if (error) {
+		if (g_error) {
 			ui_state = UI_STATE_ERROR;
 
 			LED_ON(LED_LOCK[1]);
@@ -477,21 +530,26 @@ int main(void) {
 
 			LED_OFF(ALL_LOCK_LEDS);
 			LED_SLIDER_OFF(ALL_SLIDERS);
+			/*
 			for (i=0;i<26;i++){
 				LEDDriver_setRGBLED(i,0);
 			}
-
+*/
 			InitializeReception();
 			manual_exit_primed=0;
 			exit_updater=false;
 		}
 	}
-
+/*
 	LED_SLIDER_OFF(ALL_SLIDERS);
 
+	for (i=0;i<26;i++){
+		LEDDriver_setRGBLED(i,i*30);
+	}
+*/
 	Uninitialize();
-	JumpTo(kStartAddress);
-	while (1) {
+	JumpTo(kStartExecutionAddress);
+/*	while (1) {
 		if (dly++>2000) dly=0;
 		if (dly>1000){
 			LED_SLIDER_OFF(ALL_SLIDERS);
@@ -499,5 +557,5 @@ int main(void) {
 			LED_SLIDER_ON(ALL_SLIDERS);
 		}
 
-	}
+	}*/
 }
