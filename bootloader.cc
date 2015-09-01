@@ -540,22 +540,8 @@ int main(void) {
 			exit_updater=false;
 		}
 	}
-/*
-	LED_SLIDER_OFF(ALL_SLIDERS);
 
-	for (i=0;i<26;i++){
-		LEDDriver_setRGBLED(i,i*30);
-	}
-*/
 	Uninitialize();
 	JumpTo(kStartExecutionAddress);
-/*	while (1) {
-		if (dly++>2000) dly=0;
-		if (dly>1000){
-			LED_SLIDER_OFF(ALL_SLIDERS);
-		} else {
-			LED_SLIDER_ON(ALL_SLIDERS);
-		}
 
-	}*/
 }

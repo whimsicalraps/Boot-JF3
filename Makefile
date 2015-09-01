@@ -5,7 +5,7 @@
 PROJECT = bootloader
 
 COMBO = combo
-MAINAPP_HEX = ../smrf-p6/main.hex
+MAINAPP_HEX = ../smr/main.hex
 
 # Object files
 OBJECTS = 	startup_stm32f429_439xx.o system_stm32f4xx.o \
