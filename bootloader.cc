@@ -530,11 +530,11 @@ int main(void) {
 
 			LED_OFF(ALL_LOCK_LEDS);
 			LED_SLIDER_OFF(ALL_SLIDERS);
-			/*
+
 			for (i=0;i<26;i++){
 				LEDDriver_setRGBLED(i,0);
 			}
-*/
+
 			InitializeReception();
 			manual_exit_primed=0;
 			exit_updater=false;
