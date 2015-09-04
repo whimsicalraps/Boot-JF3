@@ -26,7 +26,7 @@
 
 #include "stm32f4xx.h"
 
-//#include "system.h"
+#include "system.h"
 
 #include <cstring>
 
@@ -62,7 +62,7 @@ const uint32_t slider_led[6]={LED_SLIDER1, LED_SLIDER2, LED_SLIDER3, LED_SLIDER4
 #define ALL_SLIDERS (LED_SLIDER1|LED_SLIDER2|LED_SLIDER3|LED_SLIDER4|LED_SLIDER5|LED_SLIDER6)
 #define ALL_LOCK_LEDS (LED_LOCK1| LED_LOCK2| LED_LOCK3| LED_LOCK4| LED_LOCK5| LED_LOCK6)
 
-//using namespace smr;
+using namespace driver_system;
 using namespace stmlib;
 using namespace stm_audio_bootloader;
 
@@ -86,7 +86,7 @@ void DebugMon_Handler(void) { }
 void PendSV_Handler(void) { }
 
 }
-//System sys;
+System sys;
 PacketDecoder decoder;
 Demodulator demodulator;
 
@@ -220,7 +220,6 @@ void process_audio_block(int16_t *input, int16_t *output, uint16_t ht, uint16_t 
 	bool sample;
 	static bool last_sample=false;
 	int32_t t;
-	//int32_t sample;
 
 	LED_ON(LED_LOCK[5]);
 
@@ -362,10 +361,7 @@ void init_audio_in(){
 }
 
 void Init() {
-	SystemInit();
-	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x8000);
-
-	//sys.Init((F_CPU / (2*kSampleRate ))- 1, false);
+	sys.Init(false);
 	system_clock.Init();
 	init_inouts();
 }
@@ -442,8 +438,7 @@ int main(void) {
 		LED_ring_startup();
 
 		init_audio_in(); //QPSK or Codec
-		//sys.StartTimers();
-		SysTick_Config(F_CPU / 1000);
+		sys.StartTimers();
 	}
 
 	dly=4000;
