@@ -1,18 +1,5 @@
 /*
  * i2s.c - I2S feeder routines
- *
- * Problem: Seems that just enabling the I2S_EXT DMA without enabling the I2S (main) DMA does not actually run the EXT DMA
- * --MCLK does not turn on, thus nothing is recorded
- * --interrupt does not run (except once when we DISABLE the EXT DMA)
- *
- * Proposed solution#1: Use a second CODEC (or ADC?) for Recording/RX. How about the WM8731 on the busted board? Tie into the I2C bus (set different address by cutting that pin, ugh)
- * But the I2S3 shares pins with the SD card access, so that's a bummer
- *
- * Proposed solution#2: Code this CODEC for Recording and use the STM32's DAC for output. Basically what we were trying before, dunno why that was glitchy?
- * Could easily jump PA4/PA5 on header pins through two opamps (1:1 + 1:16 = 12 + 4 bits = 16-bit) to C23
- *
- * Proposed solution#3: Use the WM8731 in master mode, so it's always generating MCLK.
- * Disadvantage: We can't play and record at different rates
  */
 
 #include "i2s.h"

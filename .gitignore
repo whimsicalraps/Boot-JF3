@@ -1,0 +1,15 @@
+*.o
+blburn
+burn
+old
+*.dmp
+*.elf
+*.wav
+*.bin
+*.hex
+*.map
+tmp*
+.settings/
+.project
+.cproject
+.DS_Store

@@ -26,20 +26,20 @@
 
 #include "stm32f4xx.h"
 
-#include "system.h"
+//#include "system.h"
 
 #include <cstring>
 
-#include "dsp.h"
-#include "ring_buffer.h"
-#include "bootloader_utils.h"
-#include "flash_programming.h"
-#include "system_clock.h"
+#include "../stmlib/dsp/dsp.h"
+#include "../stmlib/utils/ring_buffer.h"
+#include "../stmlib/system/bootloader_utils.h"
+#include "../stmlib/system/flash_programming.h"
+#include "../stmlib/system/system_clock.h"
 
-//#include "encoding/qpsk/packet_decoder.h"
-//#include "encoding/qpsk/demodulator.h"
-#include "encoding/fsk/packet_decoder.h"
-#include "encoding/fsk/demodulator.h"
+//#include "../stm-audio-bootloader/qpsk/packet_decoder.h"
+//#include "../stm-audio-bootloader/qpsk/demodulator.h"
+#include "../stm-audio-bootloader/fsk/packet_decoder.h"
+#include "../stm-audio-bootloader/fsk/demodulator.h"
 
 extern "C" {
 #include <stddef.h> /* size_t */
@@ -62,7 +62,7 @@ const uint32_t slider_led[6]={LED_SLIDER1, LED_SLIDER2, LED_SLIDER3, LED_SLIDER4
 #define ALL_SLIDERS (LED_SLIDER1|LED_SLIDER2|LED_SLIDER3|LED_SLIDER4|LED_SLIDER5|LED_SLIDER6)
 #define ALL_LOCK_LEDS (LED_LOCK1| LED_LOCK2| LED_LOCK3| LED_LOCK4| LED_LOCK5| LED_LOCK6)
 
-using namespace smr;
+//using namespace smr;
 using namespace stmlib;
 using namespace stm_audio_bootloader;
 
@@ -86,7 +86,7 @@ void DebugMon_Handler(void) { }
 void PendSV_Handler(void) { }
 
 }
-System sys;
+//System sys;
 PacketDecoder decoder;
 Demodulator demodulator;
 
@@ -362,7 +362,10 @@ void init_audio_in(){
 }
 
 void Init() {
-	sys.Init((F_CPU / (2*kSampleRate ))- 1, false);
+	SystemInit();
+	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x8000);
+
+	//sys.Init((F_CPU / (2*kSampleRate ))- 1, false);
 	system_clock.Init();
 	init_inouts();
 }
@@ -439,7 +442,8 @@ int main(void) {
 		LED_ring_startup();
 
 		init_audio_in(); //QPSK or Codec
-		sys.StartTimers();
+		//sys.StartTimers();
+		SysTick_Config(F_CPU / 1000);
 	}
 
 	dly=4000;
