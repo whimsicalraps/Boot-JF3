@@ -61,7 +61,7 @@ AFLAGS  = $(ARCHFLAGS)
 
 LDSCRIPT = $(DEVICE)/$(LOADFILE)
 #LFLAGS  = -Map $(BINARYNAME).map -nostartfiles -T $(LDSCRIPT)
-LFLAGS  = -Wl,-Map=$(BINARYNAME).map -Wl,--gc-sections \
+LFLAGS  = -Wl,-Map=$(BUILDDIR)/$(BINARYNAME).map -Wl,--gc-sections \
 	-T $(LDSCRIPT) \
 	-I.
 
