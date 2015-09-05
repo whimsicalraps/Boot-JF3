@@ -93,7 +93,6 @@ SECTIONS
     *(.ccmdata)
     . = ALIGN(16);
   } >CCMRAM
- 
  /*
   DISCARD :
   {

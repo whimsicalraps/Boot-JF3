@@ -1,36 +1,42 @@
-# Makefile for STM32F4
-# 11-10-2011 E. Brombaugh
-# 2014-07-25 D Green
-
-PROJECT = bootloader
+BINARYNAME = bootloader
 
 COMBO = combo
 MAINAPP_HEX = ../SMR/build/main.hex
 
-# Object files
-OBJECTS = 	startup_stm32f429_439xx.o system_stm32f4xx.o \
-			bootloader.o inouts.o led_driver.o codec.o i2s.o system.o \
-			../stmlib/system/bootloader_utils.o ../stmlib/system/system_clock.o ../stm-audio-bootloader/fsk/packet_decoder.o \
-			misc.o stm32f4xx_flash.o stm32f4xx_gpio.o stm32f4xx_rcc.o stm32f4xx_tim.o stm32f4xx_i2c.o stm32f4xx_spi.o stm32f4xx_dma.o
-				
-# Linker script
-LDSCRIPT = stm32f429xx.ld
+STARTUP = startup_stm32f4xx.s
+SYSTEM = system_stm32f4xx.c
+LOADFILE = stm32f427.ld
 
-ARCHFLAGS = -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16 
 F_CPU          = 168000000L
 
-CFLAGS = -g2 -Os $(ARCHFLAGS)
-CFLAGS +=  -I. -DARM_MATH_CM4 -D'__FPU_PRESENT=1' -DF_CPU=$(F_CPU) -DSTM32F4XX
-CFLAGS +=  -fsingle-precision-constant -Wdouble-promotion 	
+DEVICE = stm32/device
+CORE = stm32/core
+PERIPH = stm32/periph
 
-CPPFLAGS      = -fno-exceptions
+BUILDDIR = build
 
-AFLAGS  = $(ARCHFLAGS)
-LFLAGS  = -Wl,-Map=$(PROJECT).map -Wl,--gc-sections \
-	-T $(LDSCRIPT) \
-	-I.
+SOURCES += $(wildcard $(PERIPH)/src/*.c)
+SOURCES += $(DEVICE)/src/$(STARTUP)
+SOURCES += $(DEVICE)/src/$(SYSTEM)
+SOURCES += $(wildcard *.cc)
+SOURCES += $(wildcard *.c)
+#SOURCES += $(STMLIB)/system/bootloader_utils.cc
+#SOURCES += $(STMLIB)/system/system_clock.cc
 
-# Executables
+OBJECTS = $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
+
+OBJECTS += ../stmlib/system/bootloader_utils.o ../stmlib/system/system_clock.o ../stm-audio-bootloader/fsk/packet_decoder.o
+
+
+INCLUDES += -I$(DEVICE)/include \
+			-I$(CORE)/include \
+			-I$(PERIPH)/include \
+			-I\
+
+ELF = $(BUILDDIR)/$(BINARYNAME).elf
+HEX = $(BUILDDIR)/$(BINARYNAME).hex
+BIN = $(BUILDDIR)/$(BINARYNAME).bin
+
 ARCH = arm-none-eabi
 CC = $(ARCH)-gcc
 CXX = $(ARCH)-g++
@@ -39,59 +45,85 @@ AS = $(ARCH)-as
 OBJCPY = $(ARCH)-objcopy
 OBJDMP = $(ARCH)-objdump
 GDB = $(ARCH)-gdb
-
-CPFLAGS = -O binary
-ODFLAGS	= -x --syms
-
 FLASH = st-flash
 
-# Targets
-all: $(PROJECT).bin
+ARCHFLAGS = -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16 
 
-clean:
-	-rm -f $(OBJECTS) *.lst *.elf *.bin *.map *.dmp
+CFLAGS = -g2 -Os $(ARCHFLAGS) 
+CFLAGS +=  -I. -DARM_MATH_CM4 -D'__FPU_PRESENT=1' -DF_CPU=$(F_CPU) -DSTM32F4XX   
+CFLAGS += -DUSE_STDPERIPH_DRIVER  $(INCLUDES) 
+CFLAGS +=  -fsingle-precision-constant -Wdouble-promotion 	
 
-flash: stlink_flash
+CPPFLAGS = $(CFLAGS) -fno-exceptions
 
-stlink_flash: $(PROJECT).bin
-	$(FLASH) write $(PROJECT).bin 0x08000000
+#AFLAGS  = -mlittle-endian -mthumb -mcpu=cortex-m4 
+AFLAGS  = $(ARCHFLAGS)
+
+LDSCRIPT = $(DEVICE)/$(LOADFILE)
+#LFLAGS  = -Map $(BINARYNAME).map -nostartfiles -T $(LDSCRIPT)
+LFLAGS  = -Wl,-Map=$(BINARYNAME).map -Wl,--gc-sections \
+	-T $(LDSCRIPT) \
+	-I.
+
+
+all: Makefile $(BIN) $(HEX)
+
+echox:
+	echo $(OBJECTS)
+	
+$(BIN): $(ELF)
+	$(OBJCPY) -O binary $< $@
+	$(OBJDMP) -x --syms $< > $(addsuffix .dmp, $(basename $<))
+	ls -l $@ $<
+
+$(HEX): $(ELF)
+	$(OBJCPY) --output-target=ihex $< $@
+
+$(ELF): $(OBJECTS)
+#	$(LD) $(LFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(LFLAGS) -o $@ $(OBJECTS)
+
+$(BUILDDIR)/%.o: %.cc
+	mkdir -p $(dir $@)
+	$(CXX) -c $(CPPFLAGS) $< -o $@
+
+$(BUILDDIR)/%.o: %.c
+	mkdir -p $(dir $@)
+#	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) -std=c99 -c -o $@ $<
+
+$(BUILDDIR)/%.o: %.s
+	mkdir -p $(dir $@)
+	$(AS) $(AFLAGS) $< -o $@ > $(addprefix $(BUILDDIR)/, $(addsuffix .lst, $(basename $<)))
+
+
+flash: $(BIN)
+	$(FLASH) write $(BIN) 0x08000000
 
 combo_flash: combo
 	$(FLASH) write $(COMBO).bin 0x08000000
-	
-$(PROJECT).hex: $(PROJECT).elf 
-	$(OBJCPY) -O ihex $< $@
-		
-
-# ------------------------------------------------------------------------------
-# Bootloader merging
-# ------------------------------------------------------------------------------
 
 combo: $(COMBO).bin
 
-$(COMBO).bin:  $(MAINAPP_HEX) $(PROJECT).hex
-	cat  $(MAINAPP_HEX) $(PROJECT).hex | \
+$(COMBO).bin: $(HEX)
+	cat  $(MAINAPP_HEX) $(HEX) | \
 	awk -f ../stmlib/programming/merge_hex.awk > $(COMBO).hex
 	$(OBJCPY) -I ihex -O binary $(COMBO).hex $(COMBO).bin
 
 
-$(PROJECT).bin: $(PROJECT).elf 
-	$(OBJCPY) $(CPFLAGS) $(PROJECT).elf $(PROJECT).bin
-	$(OBJDMP) $(ODFLAGS) $(PROJECT).elf > $(PROJECT).dmp
-	$(OBJCPY) -O ihex $(PROJECT).elf $(PROJECT).hex
-	ls -l $(PROJECT).elf $(PROJECT).bin $(PROJECT).hex
-
-$(PROJECT).elf: $(OBJECTS) $(LDSCRIPT)
-	$(CC) $(LFLAGS) -o $(PROJECT).elf $(OBJECTS)
-
-startup_stm32f4xx.o: startup_stm32f4xx.s
-	$(AS) $(AFLAGS) startup_stm32f4xx.s -o startup_stm32f4xx.o > startup_stm32f4xx.lst
+clean:
+	rm -rf build
 	
-%.o: %.cc
-	$(CXX) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+wav: fsk-wav
+
+qpsk-wav: $(BIN)
+	cd .. && python stm-audio-bootloader/qpsk/encoder.py \
+		-t stm32f4 -s 48000 -b 12000 -c 6000 -p 256 \
+		SMR/$(BIN)
 
 
-%.o: %.c %.h
-	$(CC) $(CFLAGS) -std=c99 -c -o $@ $<
-
-
+fsk-wav: $(BIN)
+	cd .. && python stm-audio-bootloader/fsk/encoder.py \
+		-s 48000 -b 16 -n 8 -z 4 -p 256 -g 16384 -k 1100 \
+		SMR/$(BIN)
+	
