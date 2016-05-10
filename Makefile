@@ -1,13 +1,14 @@
 BINARYNAME = bootloader
 
 COMBO = combo
-MAINAPP_HEX = ../SMR/build/main.hex
+MAINAPP_HEX = ../JF/main.hex
 
 STARTUP = startup_stm32f4xx.s
 SYSTEM = system_stm32f4xx.c
-LOADFILE = stm32f427.ld
+#LOADFILE = stm32f427.ld
+LOADFILE = stm32_boot.ld
 
-F_CPU          = 168000000L
+F_CPU          = 180000000L
 
 DEVICE = stm32/device
 CORE = stm32/core
