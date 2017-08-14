@@ -511,37 +511,30 @@ int main(void) {
 	Init();
 	InitializeReception(); //FSK
 
-	dly=4000;
+	dly=0x20;
 	while(dly--){
 		// button_debounce += read_speed();
 		button_debounce += check_boot();
 	}
-	// USART_putn16(USART1, button_debounce);
 	// check_boot_verbose();
-	exit_updater = (button_debounce>2000) ? 0 : 1;
-	// USART_putn8(USART1, exit_updater);
+	exit_updater = (button_debounce>0x10) ? 0 : 1;
 
 	if (!exit_updater){
-		// LED_ring_startup();
-
 		init_audio_in(); //QPSK or Codec
 		sys.StartTimers(); // this is div1000 perhaps causes weird shit due to 180MHz clock?
-		// USART_puts(USART1, "\n\rTIMERS");
-
 	}
-
-	dly=4000;
+	LEDAll(0);
+	button_debounce = 0;
+	dly=0x20;
 	while(dly--){
 		button_debounce += check_boot();
 	}
-	exit_updater = (button_debounce>2000) ? 0 : 1;
-	// USART_putn8(USART1, exit_updater);
+	exit_updater = (button_debounce>0x10) ? 0 : 1;
 
 	manual_exit_primed=0;
 
 
 		// LEDUp(3);
-
 
 	while (!exit_updater) {
 		g_error = 0;
