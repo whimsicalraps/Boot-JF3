@@ -22,6 +22,11 @@
 #define SPEED_MODE_pin GPIO_Pin_11
 #define SPEED_MODE ((MODE_GPIO->IDR & SPEED_MODE_pin))
 
+	// RUN SIGNAL
+#define RS_RCC 			RCC_AHB1Periph_GPIOB
+#define RS_GPIO			GPIOB
+#define RUN_SIG_pin 	GPIO_Pin_0
+#define RUN_SIG 		(RS_GPIO->IDR & RUN_SIG_pin)
 
 
 // HARDWARE PERIPHERAL CLOCK FOR TRIGGER INPUTS

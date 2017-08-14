@@ -4,6 +4,8 @@
 
 extern __IO uint16_t adc_buffer[NUM_ADCS];
 
+uint8_t check_run(void);
+
 void init_inouts(void){
 	GPIO_InitTypeDef gpio;
 
@@ -32,6 +34,14 @@ void init_inouts(void){
 	// Init Trigger pins (still no pullup as transistor buffered)
 	gpio.GPIO_Pin = TR_1_pin | TR_2_pin | TR_3_pin | TR_4_pin | TR_5_pin | TR_6_pin;
 	GPIO_Init(TR_GPIO, &gpio);
+
+	// RUN: OUT SIG -> use an #ifdef v2
+		RCC_AHB1PeriphClockCmd(RS_RCC, ENABLE);
+		gpio.GPIO_Mode = GPIO_Mode_OUT;
+		gpio.GPIO_OType = GPIO_OType_PP;
+		gpio.GPIO_PuPd = GPIO_PuPd_NOPULL;
+		gpio.GPIO_Pin = RUN_SIG_pin;
+		GPIO_Init(RS_GPIO, &gpio);
 }
 
 uint8_t read_speed(void){
@@ -57,7 +67,7 @@ uint8_t check_boot(void){
 
 	// param_read_switches();
 
-	out += !RUN_MODE;
+	out += check_run();
 	out += (SPEED_MODE > 0);
 	out += !TRANS_MODE;
 
@@ -73,44 +83,65 @@ uint8_t check_boot(void){
 	} else {
 		out = 0;
 	}
+	// USART_putn8(USART1, out);
 	return out;
 }
-/*
-uint8_t check_boot_verbose(void){
-	// require following conditions to load into bootloader
-		// RUN jack present
-		// sound mode
-		// cycle mode
-		// All pots @maximum (>4000?)
-	static uint8_t out = 0;
 
-	out = 0;
+uint8_t check_run(void)
+{
+	uint8_t expected = 0;
+	uint8_t match_count = 0;
+	uint8_t high_count = 0;
 
-	// param_read_switches();
+	for( uint8_t i=0; i<16; i++ ){
 
-	out += !RUN_MODE;
-	USART_putn8(USART1, out);
-	out += (SPEED_MODE > 0);
-	USART_putn8(USART1, out);
-	out += !TRANS_MODE;
-	USART_putn8(USART1, out);
+		expected ^= 1;
+		(expected)
+		    ? GPIO_SetBits( RS_GPIO, RUN_SIG_pin )
+		    : GPIO_ResetBits( RS_GPIO, RUN_SIG_pin );
+		
+		uint32_t delay_count = 20;
+		while( delay_count ){ delay_count--; }
 
-	out += (adc_buffer[TIME_POT] <= 500);
-	USART_putn8(USART1, out);
-	out += (adc_buffer[INTONE_POT] <= 500);
-	USART_putn8(USART1, out);
-	out += (adc_buffer[RAMP_POT] <= 500);
-	USART_putn8(USART1, out);
-	out += (adc_buffer[FM_POT] <= 500);
-	USART_putn8(USART1, out);
-	out += (adc_buffer[CURVE_POT] <= 500);
-	USART_putn8(USART1, out);
+		uint8_t now = GPIO_ReadInputDataBit( MODE_GPIO, RUN_MODE_pin );
 
-	// only return '1' if all 8 states match
-	if(out > 7) {
-		out = 1;
-	} else {
-		out = 0;
+		high_count  += now; // how many high readings
+
+		match_count += !(expected ^ now); // how many flipped matches
+
 	}
-	return out;
-}*/
+	// USART_putn8(USART1, match_count);
+	// USART_putn8(USART1, high_count);
+
+	if( match_count >= 0x0A ){
+		// V2 hardware. no run present
+		return 0;
+	}
+	if( high_count >= 0x0A){
+		// V1 hardware. no run present
+		return 0;
+	}
+	return 1; // hw version unknown, but RUN is present
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
