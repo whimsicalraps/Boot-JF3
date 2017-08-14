@@ -267,13 +267,13 @@ void process_audio_block(uint32_t *input, uint32_t *output, uint16_t size){
 		// t = t<<1; // double volume
 
 		if (last_sample==1){
-			if (t < -300) {
+			if (t < -3000) {
 				sample=0;
 			} else {
 				sample=1;
 			}
 		} else {
-			if (t > 400) {
+			if (t > 4000) {
 				sample=1;
 			} else {
 				sample=0;
