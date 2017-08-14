@@ -46,7 +46,7 @@ extern "C" {
 #include <stddef.h> /* size_t */
 #include "dig_inouts.h"
 #include "adc.h"
-// #include "debug.h"
+#include "debug.h"
 #include "codec.h"
 #include "sai.h"
 // #include "pca9685_driver.h"
