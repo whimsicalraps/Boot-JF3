@@ -444,8 +444,8 @@ void Init() {
 	sys.Init(0);
 	system_clock.Init();
 
-	// USART_Config(115200); // Configure debugger
-	// USART_puts(USART1, "\n\rBoot");
+	USART_Config(115200); // Configure debugger
+	USART_puts(USART1, "\n\rBoot");
 
 	init_inouts(); // UPDATE THIS FUNCTION TO CHECK USART PINS not switches
 	uint32_t i = ADC1_Init((uint16_t *)adc_buffer); // init ADC converters
