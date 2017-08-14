@@ -1,7 +1,7 @@
 BINARYNAME = bootloader
 
 COMBO = combo
-MAINAPP_HEX = ../JF/main.hex
+MAINAPP_HEX = ../JF3-test/main.hex
 
 STARTUP = startup_stm32f4xx.s
 SYSTEM = system_stm32f4xx.c
@@ -50,7 +50,7 @@ FLASH = st-flash
 
 ARCHFLAGS = -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16 
 
-CFLAGS = -g2 -Os $(ARCHFLAGS) 
+CFLAGS = -g2 -O0 $(ARCHFLAGS) 
 CFLAGS +=  -I. -DARM_MATH_CM4 -D'__FPU_PRESENT=1' -DF_CPU=$(F_CPU) -DSTM32F4XX   
 CFLAGS += -DUSE_STDPERIPH_DRIVER  $(INCLUDES) 
 CFLAGS +=  -fsingle-precision-constant -Wdouble-promotion 	
