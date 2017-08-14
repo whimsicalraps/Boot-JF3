@@ -9,7 +9,7 @@
 
 uint32_t txbuf, rxbuf;
 
-#define Block_Size 8
+
 /*
 	max CPU time is for sound-sustain-run mode
 	w/ FM input & FM knob full CW
@@ -24,13 +24,6 @@ uint32_t txbuf, rxbuf;
 	Block_Size 2 = peak 76%
 		latency 1.24ms
 */
-
-
-// Use these two to define Buffer sizes, rather than hard-setting bytes
- // This allows Block Size to be changed easily
- // 16 & 8x multipliers are appropriate for the amount of input data
-#define codec_RX_Block (Block_Size * 4) // 4 adc samples per frame
-#define codec_TX_Block (Block_Size * 7) // 7 dac samples per frame
 
 
 // These could be int32_t instead (remove the *2) if DMA is converted to full 32bit transfers

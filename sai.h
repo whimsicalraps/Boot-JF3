@@ -12,7 +12,12 @@
 //#define PLLI2S_R   2 // 4ms uses /2 then some other divisor later for 96k?
 #define PLLI2S_R   7
 
-
+#define Block_Size 8
+// Use these two to define Buffer sizes, rather than hard-setting bytes
+ // This allows Block Size to be changed easily
+ // 16 & 8x multipliers are appropriate for the amount of input data
+#define codec_RX_Block (Block_Size * 4) // 4 adc samples per frame
+#define codec_TX_Block (Block_Size * 7) // 7 dac samples per frame
 
 
 // SAI PINS
