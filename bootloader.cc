@@ -294,12 +294,14 @@ void process_audio_block(uint32_t *input, uint32_t *output, uint16_t size){
 		// first 6 outs show LEDs
 		if(sample) {
 			*output++ = 0x7FFFFF;
-		} else { *output++ = 0; }
-		*output++=mask[1];
-		*output++=mask[2];
-		*output++=mask[3];
-		*output++=mask[4];
-		*output++=mask[5];
+		} else {
+			*output++ = 0;
+		}
+		*output++ = mask[1];
+		*output++ = mask[2];
+		*output++ = mask[3];
+		*output++ = mask[4];
+		*output++ = mask[5];
 
 		// last out sends audio
 		if (ui_state == UI_STATE_ERROR) {
