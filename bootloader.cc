@@ -618,7 +618,7 @@ int main(void) {
 			exit_updater=0;
 		}
 	}
-	// USART_puts(USART1, "\n\rEXIT");
+	USART_puts(USART1, "\n\rEXIT");
 
 	// LEDAll(0);
 	// do {register unsigned int i; for (i = 0; i < 1000000; ++i) __asm__ __volatile__ ("nop\n\t":::"memory");} while (0);
