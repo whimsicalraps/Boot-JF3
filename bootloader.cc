@@ -243,12 +243,11 @@ void SysTick_Handler() {
 
 uint16_t discard_samples = 8000;
 
-void process_audio_block(int32_t *input, uint32_t *output, uint16_t size){
+void process_audio_block(uint32_t *input, uint32_t *output, uint16_t size){
 	uint8_t sample;
 	static uint8_t last_sample=0;
 	int32_t t;
 	int32_t mask[6];
-
 	// LEDUp(5);
 
 	for(t=1;t<6;t++) {
