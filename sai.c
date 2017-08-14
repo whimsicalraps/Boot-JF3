@@ -356,7 +356,12 @@ void SAI_Enable(void) {
 
 
 
-void DMA2_Stream4_IRQHandler(void) {
+
+
+
+
+
+/*void DMA2_Stream4_IRQHandler(void) {
 	
 	if (DMA_GetITStatus(DMA2_Stream4, DMA_IT_HTIF4) != RESET) {        
 
@@ -380,4 +385,6 @@ void DMA2_Stream4_IRQHandler(void) {
 		DMA_ClearITPendingBit(DMA2_Stream4, DMA_IT_DMEIF4);
 		while(DMA_GetITStatus(DMA2_Stream4, DMA_IT_DMEIF4) != RESET) { ;; }
 	}
-}
+}*/
+
+

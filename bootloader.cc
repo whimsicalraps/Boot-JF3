@@ -314,11 +314,38 @@ void process_audio_block(uint32_t *input, uint32_t *output, uint16_t size){
 
 	}
 
-	out_mask[1] = discard_samples << 10;
+	// out_mask[1] = discard_samples << 10;
 
 	// convert_32b_to_dac(codec_TX_Block, buf_[0], buf_[1], buf_[2], buf_[3], buf_[4], buf_[5], buf_all, output);
 
 	// LEDDown(5);
+}
+
+extern uint32_t *srcH, *dstH, *srcF, *dstF;
+void DMA2_Stream4_IRQHandler(void) {
+	
+	if (DMA_GetITStatus(DMA2_Stream4, DMA_IT_HTIF4) != RESET) {        
+
+        	process_audio_block(srcH, dstH, codec_RX_Block); // Run the main audio loop! First half
+
+		DMA_ClearITPendingBit(DMA2_Stream4, DMA_IT_HTIF4);
+		while(DMA_GetITStatus(DMA2_Stream4, DMA_IT_HTIF4) != RESET) { ;; }
+	} else if (DMA_GetITStatus(DMA2_Stream4, DMA_IT_TCIF4) != RESET) {
+
+        	process_audio_block(srcF, dstF, codec_RX_Block); // Second half of DMA
+
+		DMA_ClearITPendingBit(DMA2_Stream4, DMA_IT_TCIF4);
+		while(DMA_GetITStatus(DMA2_Stream4, DMA_IT_TCIF4) != RESET) { ;; }
+	} else if (DMA_GetITStatus(DMA2_Stream4, DMA_IT_TEIF4) != RESET) {
+		DMA_ClearITPendingBit(DMA2_Stream4, DMA_IT_TEIF4);
+		while(DMA_GetITStatus(DMA2_Stream4, DMA_IT_TEIF4) != RESET) { ;; }
+	} else if (DMA_GetITStatus(DMA2_Stream4, DMA_IT_FEIF4) != RESET) {
+		DMA_ClearITPendingBit(DMA2_Stream4, DMA_IT_FEIF4);
+		while(DMA_GetITStatus(DMA2_Stream4, DMA_IT_FEIF4) != RESET) { ;; }
+	} else if (DMA_GetITStatus(DMA2_Stream4, DMA_IT_DMEIF4) != RESET) {
+		DMA_ClearITPendingBit(DMA2_Stream4, DMA_IT_DMEIF4);
+		while(DMA_GetITStatus(DMA2_Stream4, DMA_IT_DMEIF4) != RESET) { ;; }
+	}
 }
 
 }
