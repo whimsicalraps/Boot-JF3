@@ -38,8 +38,8 @@
 
 //#include "../stm-audio-bootloader/qpsk/packet_decoder.h"
 //#include "../stm-audio-bootloader/qpsk/demodulator.h"
-#include "../stm-audio-bootloader/fsk/packet_decoder.h"
-#include "../stm-audio-bootloader/fsk/demodulator.h"
+#include "../stm_audio_bootloader/fsk/packet_decoder.h"
+#include "../stm_audio_bootloader/fsk/demodulator.h"
 
 
 extern "C" {

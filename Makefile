@@ -21,12 +21,12 @@ SOURCES += $(DEVICE)/src/$(STARTUP)
 SOURCES += $(DEVICE)/src/$(SYSTEM)
 SOURCES += $(wildcard *.cc)
 SOURCES += $(wildcard *.c)
-SOURCES += $(STMLIB)/system/bootloader_utils.cc
-SOURCES += $(STMLIB)/system/system_clock.cc
+#SOURCES += $(STMLIB)/system/bootloader_utils.cc
+#SOURCES += $(STMLIB)/system/system_clock.cc
 
 OBJECTS = $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 
-OBJECTS += ../stmlib/system/bootloader_utils.o ../stmlib/system/system_clock.o ../stm-audio-bootloader/fsk/packet_decoder.o
+OBJECTS += ../stmlib/system/bootloader_utils.o ../stmlib/system/system_clock.o ../stm_audio_bootloader/fsk/packet_decoder.o
 
 
 INCLUDES += -I$(DEVICE)/include \
@@ -119,13 +119,13 @@ clean:
 wav: fsk-wav
 
 qpsk-wav: $(BIN)
-	cd .. && python stm-audio-bootloader/qpsk/encoder.py \
+	cd .. && python stm_audio_bootloader/qpsk/encoder.py \
 		-t stm32f4 -s 48000 -b 12000 -c 6000 -p 256 \
 		SMR/$(BIN)
 
 
 fsk-wav: $(BIN)
-	cd .. && python stm-audio-bootloader/fsk/encoder.py \
+	cd .. && python stm_audio_bootloader/fsk/encoder.py \
 		-s 48000 -b 16 -n 8 -z 4 -p 256 -g 16384 -k 1100 \
 		SMR/$(BIN)
 	
