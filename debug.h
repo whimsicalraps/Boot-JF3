@@ -4,6 +4,8 @@
 #include <stm32f4xx.h>
 
 void USART_Config(uint32_t baudrate);
+void USART_deinit(void);
+
 void USART_putc(USART_TypeDef* USARTx, unsigned char c);
 void USART_puts(USART_TypeDef* USARTx,  char *s);
 void USART_putn(USART_TypeDef* USARTx, uint32_t n);

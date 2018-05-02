@@ -42,6 +42,7 @@ Hardware Configuration defines parameters
 
 /* High Layer codec functions */
 void Codec_Init(void);
+void Codec_GPIO_deInit(void);
 
 /* Low layer codec functions */
 //void     Codec_CtrlInterface_Init(void);

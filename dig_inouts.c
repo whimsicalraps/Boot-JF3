@@ -44,6 +44,14 @@ void init_inouts(void){
 		GPIO_Init(RS_GPIO, &gpio);
 }
 
+void deinit_inouts(void){
+	GPIO_DeInit(RS_GPIO);
+	GPIO_DeInit(TR_GPIO);
+	GPIO_DeInit(MODE_GPIO);
+	RCC_AHB1PeriphClockCmd(TR_RCC, DISABLE);
+	RCC_AHB1PeriphClockCmd(MODE_RCC, DISABLE);
+}
+
 uint8_t read_speed(void){
 	uint8_t out;
 
@@ -94,13 +102,12 @@ uint8_t check_run(void)
 	uint8_t high_count = 0;
 
 	for( uint8_t i=0; i<16; i++ ){
-
 		expected ^= 1;
 		(expected)
 		    ? GPIO_SetBits( RS_GPIO, RUN_SIG_pin )
 		    : GPIO_ResetBits( RS_GPIO, RUN_SIG_pin );
 		
-		uint32_t delay_count = 20;
+		volatile uint32_t delay_count = 20;
 		while( delay_count ){ delay_count--; }
 
 		uint8_t now = GPIO_ReadInputDataBit( MODE_GPIO, RUN_MODE_pin );
@@ -110,8 +117,8 @@ uint8_t check_run(void)
 		match_count += !(expected ^ now); // how many flipped matches
 
 	}
-	// USART_putn8(USART1, match_count);
-	// USART_putn8(USART1, high_count);
+	USART_putn8(USART1, match_count); // 8
+	USART_putn8(USART1, high_count);  // 0
 
 	if( match_count >= 0x0A ){
 		// V2 hardware. no run present
@@ -123,25 +130,3 @@ uint8_t check_run(void)
 	}
 	return 1; // hw version unknown, but RUN is present
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

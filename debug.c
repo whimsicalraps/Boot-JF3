@@ -33,6 +33,14 @@ void USART_Config(uint32_t baudrate){
   USART_Cmd(USART1, ENABLE);
 }
 
+void USART_deinit(void){  
+  USART_Cmd(USART1, DISABLE);
+  USART_DeInit(USART1);
+  GPIO_DeInit(GPIOA);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, DISABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, DISABLE);
+}
+
 /* Note: The string has to be passed to the function as a pointer because
  *     the compiler doesn't know the 'string' data type. In standard
  *     C a string is just an array of characters

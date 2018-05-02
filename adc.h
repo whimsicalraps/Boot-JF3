@@ -35,5 +35,6 @@
 #define MIN_SCALE_ADC_CHANGE 100
 
 uint8_t ADC1_Init(uint16_t *ADC_Buffer);
+void ADC1_deinit(void);
 
 #endif

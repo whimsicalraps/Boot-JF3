@@ -33,6 +33,7 @@
  
 
 void SAI_Block_Init(void);
+void SAI_Block_deInit(void);
 // void climb_the_slopes(void);
 
 #endif

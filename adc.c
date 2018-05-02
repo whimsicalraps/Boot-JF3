@@ -117,3 +117,16 @@ uint8_t ADC1_Init(uint16_t *ADC_Buffer)
 	return 1;
 
 }
+
+void ADC1_deinit(void)
+{
+	// ADC_Cmd(ADC1, DISABLE);
+	// ADC_DMACmd(ADC1, DISABLE);
+	// DMA_Cmd(DMA2_Stream0, DISABLE);
+	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, DISABLE);
+	DMA_DeInit(DMA2_Stream0);
+	// GPIO_DeInit(GPIOA);
+	// ADC_DeInit();
+	// RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOB, DISABLE);
+	// RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, DISABLE);
+}

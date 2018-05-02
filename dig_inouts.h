@@ -65,6 +65,7 @@
 
 
 void init_inouts(void);
+void deinit_inouts(void);
 uint8_t read_speed(void);
 uint8_t check_boot(void);
 // uint8_t check_boot_verbose(void);

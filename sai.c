@@ -67,7 +67,26 @@ void SAI_Block_Init(void) {
 
 	SAI_Enable();
 }
+void SAI_Block_deInit(void)
+{
+	SAI_Cmd(SAI1_Block_A, DISABLE); // Then enable Block A (Master)
+	SAI_Cmd(SAI1_Block_B, DISABLE); // Enable Block B (Slave)
+	// SAI_DeInit(SAI1_Block_A);
+	
+	DMA_Cmd(DMA2_Stream4, DISABLE);
+	DMA_Cmd(DMA2_Stream1, DISABLE);
+	SAI_DMACmd(SAI1_Block_A, DISABLE); // Enable Block A DMA Request
+	SAI_DMACmd(SAI1_Block_B, DISABLE); // Enable Block B DMA Request
 
+	DMA_DeInit(DMA2_Stream4);
+	DMA_DeInit(DMA2_Stream1);
+
+	RCC_PLLI2SCmd(DISABLE);
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SAI1, DISABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, DISABLE);
+	// RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, DISABLE);
+}
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////

@@ -2,6 +2,8 @@
 #include "codec.h"
 
 void Codec_GPIO_Init(void);
+void Codec_GPIO_deInit(void);
+
 void codec_bitbang(void);
 void firstBit(void);
 void bitB(uint16_t state);
@@ -39,7 +41,11 @@ void Codec_GPIO_Init(void)
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
     GPIO_Init(CODEC_SPI_GPIO, &GPIO_InitStructure);
 }
-
+void Codec_GPIO_deInit(void)
+{
+    GPIO_DeInit(CODEC_SPI_GPIO);
+    RCC_AHB1PeriphClockCmd(CODEC_SPI_GPIO_CLOCK, DISABLE);
+}
 
 // OWN ROLLED SPI DRIVER
 void codec_bitbang(){

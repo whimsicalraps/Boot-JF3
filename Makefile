@@ -1,7 +1,7 @@
 BINARYNAME = bootloader
 
 COMBO = combo
-MAINAPP_HEX = ../JF3-test/main.hex
+MAINAPP_HEX = ../JF3/main.hex
 
 STARTUP = startup_stm32f4xx.s
 SYSTEM = system_stm32f4xx.c
@@ -21,8 +21,8 @@ SOURCES += $(DEVICE)/src/$(STARTUP)
 SOURCES += $(DEVICE)/src/$(SYSTEM)
 SOURCES += $(wildcard *.cc)
 SOURCES += $(wildcard *.c)
-#SOURCES += $(STMLIB)/system/bootloader_utils.cc
-#SOURCES += $(STMLIB)/system/system_clock.cc
+SOURCES += $(STMLIB)/system/bootloader_utils.cc
+SOURCES += $(STMLIB)/system/system_clock.cc
 
 OBJECTS = $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 
@@ -50,7 +50,7 @@ FLASH = st-flash
 
 ARCHFLAGS = -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16 
 
-CFLAGS = -g2 -O0 $(ARCHFLAGS) 
+CFLAGS = -g2 -Os $(ARCHFLAGS) 
 CFLAGS +=  -I. -DARM_MATH_CM4 -D'__FPU_PRESENT=1' -DF_CPU=$(F_CPU) -DSTM32F4XX   
 CFLAGS += -DUSE_STDPERIPH_DRIVER  $(INCLUDES) 
 CFLAGS +=  -fsingle-precision-constant -Wdouble-promotion 	
@@ -66,9 +66,10 @@ LFLAGS  = -Wl,-Map=$(BUILDDIR)/$(BINARYNAME).map -Wl,--gc-sections \
 	-T $(LDSCRIPT) \
 	-I.
 
+SIZE_LIMIT = 16000
 
 all: Makefile $(BIN) $(HEX)
-
+	
 echox:
 	echo $(OBJECTS)
 	

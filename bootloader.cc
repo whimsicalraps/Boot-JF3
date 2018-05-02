@@ -201,14 +201,7 @@ void update_slider_LEDs(void){
 }
 
 uint16_t check_speed(void){
-	uint16_t out;
-
-	if(SPEED_MODE){
-		out = 1;
-	} else {
-		out = 0;
-	}
-	return out;
+	return !!SPEED_MODE;
 }
 
 uint16_t State=0;
@@ -552,6 +545,7 @@ int main(void) {
 					++packet_index;
 					if ((packet_index % kPacketsPerBlock) == 0) {
 						ui_state = UI_STATE_WRITING;
+						USART_puts(USART1, "\n\rwarningggg");
 						ProgramPage(recv_buffer, kBlockSize);
 						decoder.Reset();
 						demodulator.Sync(); //FSK
@@ -583,7 +577,7 @@ int main(void) {
 					LEDAll(0);
 					LEDUp(2);
 
-					// USART_puts(USART1, "\n\rEOT");
+					USART_puts(USART1, "\n\rEOT");
 					//Copy from Receive buffer to Execution memory
 
 					CopyMemory(kStartReceiveAddress, kStartExecutionAddress, (current_address-kStartReceiveAddress));
@@ -625,7 +619,13 @@ int main(void) {
 
 	// USART_puts(USART1, "\n\r2MAIN");
 	// do {register unsigned int i; for (i = 0; i < 1000000; ++i) __asm__ __volatile__ ("nop\n\t":::"memory");} while (0);
-
+	
+	// manually deinit all io (in reverse order)
+	SAI_Block_deInit();
+	// Codec_GPIO_deInit();
+	ADC1_deinit();
+	// deinit_inouts();
+	// USART_deinit();
 
 	Uninitialize();
 	JumpTo(kStartExecutionAddress);
