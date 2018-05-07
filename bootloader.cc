@@ -51,6 +51,10 @@ extern "C" {
 #include "sai.h"
 // #include "pca9685_driver.h"
 
+#ifdef ZINC
+#include "padding.h"
+#endif
+
 #define delay(x)						\
 do {							\
   register unsigned int i;				\
@@ -438,7 +442,7 @@ void Init() {
 	system_clock.Init();
 
 	USART_Config(115200); // Configure debugger
-	USART_puts(USART1, "\n\rBoot");
+	//USART_puts(USART1, "\n\rBoot");
 
 	init_inouts(); // UPDATE THIS FUNCTION TO CHECK USART PINS not switches
 	uint32_t i = ADC1_Init((uint16_t *)adc_buffer); // init ADC converters
@@ -545,7 +549,7 @@ int main(void) {
 					++packet_index;
 					if ((packet_index % kPacketsPerBlock) == 0) {
 						ui_state = UI_STATE_WRITING;
-						USART_puts(USART1, "\n\rwarningggg");
+						//USART_puts(USART1, "\n\rwarningggg");
 						ProgramPage(recv_buffer, kBlockSize);
 						decoder.Reset();
 						demodulator.Sync(); //FSK
@@ -577,7 +581,7 @@ int main(void) {
 					LEDAll(0);
 					LEDUp(2);
 
-					USART_puts(USART1, "\n\rEOT");
+					//USART_puts(USART1, "\n\rEOT");
 					//Copy from Receive buffer to Execution memory
 
 					CopyMemory(kStartReceiveAddress, kStartExecutionAddress, (current_address-kStartReceiveAddress));
@@ -612,7 +616,7 @@ int main(void) {
 			exit_updater=0;
 		}
 	}
-	USART_puts(USART1, "\n\rEXIT");
+	//USART_puts(USART1, "\n\rEXIT");
 
 	// LEDAll(0);
 	// do {register unsigned int i; for (i = 0; i < 1000000; ++i) __asm__ __volatile__ ("nop\n\t":::"memory");} while (0);

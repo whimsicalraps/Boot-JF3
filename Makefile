@@ -68,6 +68,11 @@ LFLAGS  = -Wl,-Map=$(BUILDDIR)/$(BINARYNAME).map -Wl,--gc-sections \
 
 SIZE_LIMIT = 16000
 
+ZINC ?= 1
+ifeq ($(ZINC), 1)
+	CFLAGS += -DZINC
+endif
+
 all: Makefile $(BIN) $(HEX)
 	
 echox:
