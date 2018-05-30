@@ -26,7 +26,9 @@ SOURCES += $(wildcard *.c)
 
 OBJECTS = $(addprefix $(BUILDDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 
-OBJECTS += ../stmlib/system/bootloader_utils.o ../stmlib/system/system_clock.o ../stm_audio_bootloader/fsk/packet_decoder.o
+OBJECTS += ../stmlib/system/bootloader_utils.o \
+           ../stmlib/system/system_clock.o \
+           ../stm_audio_bootloader/fsk/packet_decoder.o \
 
 
 INCLUDES += -I$(DEVICE)/include \
@@ -39,20 +41,20 @@ HEX = $(BUILDDIR)/$(BINARYNAME).hex
 BIN = $(BUILDDIR)/$(BINARYNAME).bin
 
 ARCH = arm-none-eabi
-CC = $(ARCH)-gcc
+CC=arm-none-eabi-gcc-4.9.3
 CXX = $(ARCH)-g++
-LD = $(ARCH)-ld
+LD = $(ARCH)-gcc
 AS = $(ARCH)-as
 OBJCPY = $(ARCH)-objcopy
 OBJDMP = $(ARCH)-objdump
 GDB = $(ARCH)-gdb
 FLASH = st-flash
 
-ARCHFLAGS = -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16 
+ARCHFLAGS = -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4 -mfloat-abi=soft -mfpu=fpv4-sp-d16
 
 CFLAGS = -g2 -Os $(ARCHFLAGS) 
-CFLAGS +=  -I. -DARM_MATH_CM4 -D'__FPU_PRESENT=1' -DF_CPU=$(F_CPU) -DSTM32F4XX   
-CFLAGS += -DUSE_STDPERIPH_DRIVER  $(INCLUDES) 
+CFLAGS +=  -I. -DARM_MATH_CM4 -D'__FPU_PRESENT=1' -DF_CPU=$(F_CPU) -DSTM32F4XX
+CFLAGS += -DUSE_STDPERIPH_DRIVER  $(INCLUDES)
 CFLAGS +=  -fsingle-precision-constant -Wdouble-promotion 	
 
 CPPFLAGS = $(CFLAGS) -fno-exceptions
@@ -87,8 +89,8 @@ $(HEX): $(ELF)
 	$(OBJCPY) --output-target=ihex $< $@
 
 $(ELF): $(OBJECTS)
-#	$(LD) $(LFLAGS) -o $@ $(OBJECTS)
-	$(CC) $(LFLAGS) -o $@ $(OBJECTS)
+	$(LD) $(LFLAGS) -o $@ $(OBJECTS)
+#	$(CC) $(LFLAGS) -o $@ $(OBJECTS)
 
 $(BUILDDIR)/%.o: %.cc
 	mkdir -p $(dir $@)
@@ -119,7 +121,7 @@ $(COMBO).bin: $(HEX)
 
 
 clean:
-	rm -rf build
+	rm -rf build $(OBJECTS)
 	
 wav: fsk-wav
 
