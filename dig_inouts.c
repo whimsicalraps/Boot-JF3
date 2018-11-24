@@ -117,8 +117,8 @@ uint8_t check_run(void)
 		match_count += !(expected ^ now); // how many flipped matches
 
 	}
-	USART_putn8(USART1, match_count); // 8
-	USART_putn8(USART1, high_count);  // 0
+	//USART_putn8(USART1, match_count); // 8
+	//USART_putn8(USART1, high_count);  // 0
 
 	if( match_count >= 0x0A ){
 		// V2 hardware. no run present
